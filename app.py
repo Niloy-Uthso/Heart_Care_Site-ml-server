@@ -1,18 +1,23 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import joblib
 import numpy as np
+import os
 
 app = Flask(__name__)
+CORS(app)
 
 # -------------------------------
-# Load saved files
+# Load saved files safely
 # -------------------------------
-model = joblib.load("heart_model.pkl")
-encoders = joblib.load("encoders.pkl")
-threshold = joblib.load("threshold.pkl")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+model = joblib.load(os.path.join(BASE_DIR, "heart_model.pkl"))
+encoders = joblib.load(os.path.join(BASE_DIR, "encoders.pkl"))
+threshold = joblib.load(os.path.join(BASE_DIR, "threshold.pkl"))
 
 # -------------------------------
-# Feature order (VERY IMPORTANT)
+# Feature order
 # -------------------------------
 FEATURES = [
     "BMI", "Smoking", "AlcoholDrinking", "Stroke",
@@ -30,15 +35,12 @@ def predict():
     try:
         data = request.json
 
-        # Encode categorical fields
         for col in encoders:
             if col in data:
                 data[col] = encoders[col].transform([data[col]])[0]
 
-        # Maintain correct order
         input_data = [data[f] for f in FEATURES]
 
-        # Prediction
         prob = model.predict_proba([input_data])[0][1]
         pred = int(prob >= threshold)
 
@@ -52,7 +54,7 @@ def predict():
 
 
 # -------------------------------
-# Run server
+# Local run
 # -------------------------------
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
