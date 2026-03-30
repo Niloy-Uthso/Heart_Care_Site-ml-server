@@ -4,3 +4,5 @@ joblib
 numpy
 scikit-learn
 flask-cors
+lightgbm
+pandas
